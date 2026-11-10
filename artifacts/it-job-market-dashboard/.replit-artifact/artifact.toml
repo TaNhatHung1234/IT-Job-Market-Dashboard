@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "IT Job Market Dashboard"
+description = "A Vietnamese-language dashboard for exploring sample IT job postings across Vietnam, with shareable filters, salary insights, skills analytics, and a sortable jobs table."
+version = "1.0.0"
+id = "artifacts/it-job-market-dashboard"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19627
+
+[services.development]
+run = "pnpm --filter @workspace/it-job-market-dashboard run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/it-job-market-dashboard", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/it-job-market-dashboard/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19627"
+BASE_PATH = "/"

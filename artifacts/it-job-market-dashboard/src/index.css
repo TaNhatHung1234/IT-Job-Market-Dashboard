@@ -1,0 +1,143 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@plugin "@tailwindcss/typography";
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --font-sans: var(--app-font-sans);
+  --font-serif: var(--app-font-serif);
+  --font-mono: var(--app-font-mono);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+:root {
+  color-scheme: light;
+  --background: 42 35% 96%;
+  --foreground: 204 32% 16%;
+  --border: 35 22% 85%;
+  --card: 42 40% 99%;
+  --card-foreground: 204 32% 16%;
+  --card-border: 35 22% 86%;
+  --popover: 42 40% 99%;
+  --popover-foreground: 204 32% 16%;
+  --popover-border: 35 22% 86%;
+  --primary: 158 44% 38%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 38 28% 90%;
+  --secondary-foreground: 204 32% 20%;
+  --muted: 38 24% 92%;
+  --muted-foreground: 203 13% 45%;
+  --accent: 23 76% 58%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 64% 49%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 35 22% 82%;
+  --ring: 158 44% 38%;
+  --sidebar: 204 34% 17%;
+  --sidebar-foreground: 42 35% 94%;
+  --sidebar-border: 204 24% 28%;
+  --chart-1: 158 44% 38%;
+  --chart-2: 23 76% 58%;
+  --chart-3: 202 51% 52%;
+  --chart-4: 44 76% 55%;
+  --chart-5: 275 28% 57%;
+  --app-font-sans: 'Avenir Next', 'Trebuchet MS', sans-serif;
+  --app-font-serif: 'Avenir Next', 'Trebuchet MS', sans-serif;
+  --app-font-mono: 'SFMono-Regular', 'Cascadia Code', monospace;
+  --radius: 0.75rem;
+  --button-outline: rgba(0, 0, 0, 0.1);
+  --badge-outline: rgba(0, 0, 0, 0.05);
+}
+.dark {
+  color-scheme: dark;
+  --background: 205 27% 11%;
+  --foreground: 42 25% 92%;
+  --border: 205 20% 25%;
+  --card: 204 26% 15%;
+  --card-foreground: 42 25% 92%;
+  --card-border: 205 20% 26%;
+  --popover: 204 26% 15%;
+  --popover-foreground: 42 25% 92%;
+  --popover-border: 205 20% 26%;
+  --primary: 158 48% 56%;
+  --primary-foreground: 204 34% 10%;
+  --secondary: 204 21% 23%;
+  --secondary-foreground: 42 25% 92%;
+  --muted: 204 20% 20%;
+  --muted-foreground: 204 13% 66%;
+  --accent: 23 76% 62%;
+  --accent-foreground: 204 34% 10%;
+  --destructive: 0 64% 57%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 205 20% 30%;
+  --ring: 158 48% 56%;
+  --sidebar: 204 34% 10%;
+  --sidebar-foreground: 42 25% 92%;
+  --sidebar-border: 204 22% 22%;
+  --chart-1: 158 48% 56%;
+  --chart-2: 23 76% 62%;
+  --chart-3: 202 58% 62%;
+  --chart-4: 44 76% 63%;
+  --chart-5: 275 35% 68%;
+  --button-outline: rgba(255, 255, 255, 0.1);
+  --badge-outline: rgba(255, 255, 255, 0.05);
+}
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+html {
+  scroll-behavior: smooth;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+:focus-visible {
+  outline: 3px solid hsl(var(--accent));
+  outline-offset: 2px;
+}
+.chart-grid line {
+  stroke: hsl(var(--border));
+}
+.reveal {
+  animation: reveal 0.45s ease-out both;
+}
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
