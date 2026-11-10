@@ -1,4 +1,15 @@
-import type { Job, JobFilters, SortDirection, SortKey } from '@/types/job';
+import {
+  JOB_CITIES,
+  JOB_LEVELS,
+  JOB_ROLES,
+  type Job,
+  type JobCity,
+  type JobFilters,
+  type JobLevel,
+  type JobRole,
+  type SortDirection,
+  type SortKey,
+} from '@/types/job';
 
 export const emptyFilters: JobFilters = {
   role: '',
@@ -10,21 +21,52 @@ export const emptyFilters: JobFilters = {
   keyword: '',
 };
 
+export function parseJobFilters(params: URLSearchParams): JobFilters {
+  const minValue = params.get('min');
+  const maxValue = params.get('max');
+  const rawMin = minValue === null ? 0 : Number(minValue);
+  const rawMax = maxValue === null ? 100 : Number(maxValue);
+  const minSalary = Number.isFinite(rawMin) ? Math.min(100, Math.max(0, rawMin)) : 0;
+  const maxSalary = Number.isFinite(rawMax) ? Math.min(100, Math.max(minSalary, rawMax)) : 100;
+  const role = params.get('role') ?? '';
+  const city = params.get('city') ?? '';
+  const level = params.get('level') ?? '';
+
+  return {
+    role: JOB_ROLES.includes(role as JobRole) ? (role as JobRole) : '',
+    city: JOB_CITIES.includes(city as JobCity) ? (city as JobCity) : '',
+    level: JOB_LEVELS.includes(level as JobLevel) ? (level as JobLevel) : '',
+    skills: [...new Set((params.get('skills') ?? '').split(',').filter(Boolean))],
+    minSalary,
+    maxSalary,
+    keyword: params.get('q') ?? '',
+  };
+}
+
+export function serializeJobFilters(filters: JobFilters): URLSearchParams {
+  const params = new URLSearchParams();
+  if (filters.role) params.set('role', filters.role);
+  if (filters.city) params.set('city', filters.city);
+  if (filters.level) params.set('level', filters.level);
+  if (filters.skills.length) params.set('skills', [...new Set(filters.skills)].sort().join(','));
+  if (filters.minSalary > 0) params.set('min', String(filters.minSalary));
+  if (filters.maxSalary < 100) params.set('max', String(filters.maxSalary));
+  if (filters.keyword.trim()) params.set('q', filters.keyword.trim());
+  return params;
+}
+
 export function filterJobs(jobs: readonly Job[], filters: JobFilters): Job[] {
   const query = filters.keyword.trim().toLocaleLowerCase('vi');
   return jobs.filter((job) => {
-    const text = [job.title, job.company, job.city, job.level, ...job.skills]
-      .join(' ')
-      .toLocaleLowerCase('vi');
+    const searchableText = `${job.title} ${job.company}`.toLocaleLowerCase('vi');
     return (
-      (!filters.role ||
-        job.title.toLocaleLowerCase('vi').includes(filters.role.toLocaleLowerCase('vi'))) &&
+      (!filters.role || job.role === filters.role) &&
       (!filters.city || job.city === filters.city) &&
       (!filters.level || job.level === filters.level) &&
       filters.skills.every((skill) => job.skills.includes(skill)) &&
       job.salaryMax >= filters.minSalary &&
       job.salaryMin <= filters.maxSalary &&
-      (!query || text.includes(query))
+      (!query || searchableText.includes(query))
     );
   });
 }
@@ -34,7 +76,7 @@ export function averageSalary(jobs: readonly Job[]): number {
   return jobs.reduce((sum, job) => sum + (job.salaryMin + job.salaryMax) / 2, 0) / jobs.length;
 }
 
-function mostFrequent(items: readonly string[]): string {
+export function mostFrequent(items: readonly string[]): string {
   if (!items.length) return '—';
   const counts = new Map<string, number>();
   items.forEach((item) => counts.set(item, (counts.get(item) ?? 0) + 1));
@@ -60,7 +102,7 @@ export function topSkills(jobs: readonly Job[], limit = 10): { name: string; job
   return [...counts.entries()]
     .map(([name, count]) => ({ name, jobs: count }))
     .sort((a, b) => b.jobs - a.jobs || a.name.localeCompare(b.name, 'vi'))
-    .slice(0, limit);
+    .slice(0, Math.max(0, limit));
 }
 
 export function salaryHistogram(jobs: readonly Job[]): { range: string; count: number }[] {
@@ -74,15 +116,15 @@ export function salaryHistogram(jobs: readonly Job[]): { range: string; count: n
   ];
   return bins.map((bin) => ({
     range: bin.range,
-    count: jobs.filter((j) => {
-      const midpoint = (j.salaryMin + j.salaryMax) / 2;
+    count: jobs.filter((job) => {
+      const midpoint = (job.salaryMin + job.salaryMax) / 2;
       return midpoint >= bin.min && midpoint < bin.max;
     }).length,
   }));
 }
 
-export function cityBreakdown(jobs: readonly Job[]): { name: string; jobs: number }[] {
-  const counts = new Map<string, number>();
+export function cityBreakdown(jobs: readonly Job[]): { name: JobCity; jobs: number }[] {
+  const counts = new Map<JobCity, number>();
   jobs.forEach((job) => counts.set(job.city, (counts.get(job.city) ?? 0) + 1));
   return [...counts.entries()]
     .map(([name, count]) => ({ name, jobs: count }))
@@ -91,29 +133,36 @@ export function cityBreakdown(jobs: readonly Job[]): { name: string; jobs: numbe
 
 export function salaryByLevel(
   jobs: readonly Job[],
-): { level: string; salary: number; count: number }[] {
-  const order = ['Intern', 'Junior', 'Middle', 'Senior', 'Lead'];
-  return order
-    .map((level) => {
-      const group = jobs.filter((job) => job.level === level);
-      return { level, salary: Math.round(averageSalary(group) * 10) / 10, count: group.length };
-    })
-    .filter((row) => row.count > 0);
+): { level: JobLevel; salary: number; count: number }[] {
+  return JOB_LEVELS.map((level) => {
+    const group = jobs.filter((job) => job.level === level);
+    return { level, salary: Math.round(averageSalary(group) * 10) / 10, count: group.length };
+  }).filter((row) => row.count > 0);
 }
 
 export function monthlyPostings(jobs: readonly Job[]): { month: string; count: number }[] {
-  const counts = new Map<string, number>();
-  jobs.forEach((job) => {
-    const date = new Date(`${job.postedDate}T00:00:00`);
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  if (!jobs.length) return [];
+  const counts = new Map<number, number>();
+  const monthIndex = (date: Date) => date.getUTCFullYear() * 12 + date.getUTCMonth();
+  const dates = jobs.map((job) => new Date(`${job.postedAt}T00:00:00Z`));
+  const validDates = dates.filter((date) => Number.isFinite(date.getTime()));
+  if (!validDates.length) return [];
+
+  validDates.forEach((date) => {
+    const key = monthIndex(date);
     counts.set(key, (counts.get(key) ?? 0) + 1);
   });
-  return [...counts.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, count]) => {
-      const [year, month] = key.split('-');
-      return { month: `${month}/${year.slice(2)}`, count };
-    });
+  const first = Math.min(...counts.keys());
+  const last = Math.max(...counts.keys());
+
+  return Array.from({ length: last - first + 1 }, (_, offset) => {
+    const index = first + offset;
+    const date = new Date(Date.UTC(Math.floor(index / 12), index % 12, 1));
+    const key = monthIndex(date);
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    return { month: `${month}/${String(year).slice(-2)}`, count: counts.get(key) ?? 0 };
+  });
 }
 
 export function sortJobs(jobs: readonly Job[], key: SortKey, direction: SortDirection): Job[] {

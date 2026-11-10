@@ -1,26 +1,44 @@
-import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { BriefcaseBusiness } from 'lucide-react';
-import { MetricCard } from './metric-card';
-import { SkillTag } from './skill-tag';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { describe, expect, it, vi as testApi } from 'vitest';
+import { FilterBar } from '@/features/filters/FilterBar';
+import { JobsTable } from '@/features/table/JobsTable';
+import { emptyFilters } from '@/utils/jobs';
+import type { Job } from '@/types/job';
+import { vi } from '@/i18n/vi';
 
-describe('dashboard building blocks', () => {
-  it('renders a KPI value with its label and context', () => {
-    render(
-      <MetricCard
-        label="Tin tuyển dụng"
-        value="400"
-        note="tin mẫu"
-        icon={BriefcaseBusiness}
-        accent="text-primary"
-      />,
-    );
-    expect(screen.getByTestId('metric-value')).toHaveTextContent('400');
-    expect(screen.getByText('tin mẫu')).toBeInTheDocument();
+const makeJob = (index: number): Job => ({
+  id: `VN-${String(index + 1).padStart(4, '0')}`,
+  title: `Frontend Developer ${index + 1}`,
+  company: 'Sample Tech',
+  city: 'Ho Chi Minh',
+  role: 'Frontend',
+  level: 'Junior',
+  skills: ['React', 'TypeScript', 'Git'],
+  salaryMin: 18,
+  salaryMax: 30,
+  postedAt: `2026-01-${String(index + 1).padStart(2, '0')}`,
+});
+
+describe('dashboard features', () => {
+  it('updates the selected role from the filter bar', () => {
+    const setFilters = testApi.fn();
+    render(<FilterBar filters={emptyFilters} setFilters={setFilters} skills={['React']} />);
+
+    fireEvent.change(screen.getByLabelText(vi.role), { target: { value: 'Frontend' } });
+
+    expect(setFilters).toHaveBeenCalledWith({ ...emptyFilters, role: 'Frontend' });
   });
 
-  it('renders a skill as an accessible text tag', () => {
-    render(<SkillTag name="TypeScript" />);
-    expect(screen.getByTestId('skill-TypeScript')).toHaveTextContent('TypeScript');
+  it('paginates the job table in pages of ten', () => {
+    render(<JobsTable jobs={Array.from({ length: 11 }, (_, index) => makeJob(index))} />);
+
+    expect(screen.getAllByTestId(/^row-job-/)).toHaveLength(10);
+    fireEvent.click(screen.getByRole('button', { name: vi.next }));
+
+    expect(screen.getAllByTestId(/^row-job-/)).toHaveLength(1);
+    expect(screen.getByTestId('row-job-VN-0001')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('row-job-VN-0001')).getByText('Frontend Developer 1'),
+    ).toBeInTheDocument();
   });
 });

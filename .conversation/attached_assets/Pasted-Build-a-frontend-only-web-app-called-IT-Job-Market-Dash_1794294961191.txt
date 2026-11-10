@@ -1,0 +1,51 @@
+Build a frontend-only web app called "IT Job Market Dashboard" that visualizes the IT job market in Vietnam. This is a portfolio project, so code quality, structure and documentation matter as much as the UI.
+
+## Tech stack (strict, do not substitute)
+- React 18 + TypeScript (strict mode) + Vite
+- Tailwind CSS
+- Recharts for charts
+- Vitest + React Testing Library for tests
+- ESLint + Prettier
+- No backend, no database, no paid APIs. All data is loaded from a local JSON file.
+
+## Data
+- Create src/data/jobs.json with 400 realistic sample job postings. Add a clear comment/README note that this is SAMPLE DATA that can be replaced with real data later.
+- Each job has: id, title, company, city (Ha Noi, Ho Chi Minh, Da Nang, Remote), role (Frontend, Backend, Fullstack, Mobile, Data, DevOps, QA, AI/ML), level (Intern, Fresher, Junior, Middle, Senior), skills (array of 3-6 items, e.g. React, Node.js, Python, Java, Docker, AWS, SQL...), salaryMin and salaryMax (million VND per month), postedAt (ISO date within the last 12 months).
+- Make the distributions realistic (e.g. Senior pays more than Fresher, Ho Chi Minh and Ha Noi have the most postings).
+- Write a typed loader in src/data/loadJobs.ts so the data source can be swapped easily.
+
+## Features
+1. Filter bar: role, city, level, skills (multi-select), salary range slider, keyword search by title/company. Filters sync to the URL query string so a filtered view can be shared.
+2. KPI cards: total jobs, average salary, most in-demand skill, top hiring city.
+3. Charts (all react to filters):
+   - Top 10 most requested skills (horizontal bar)
+   - Salary distribution (histogram)
+   - Jobs by city (bar or donut)
+   - Average salary by level (bar)
+   - Jobs posted per month over time (line)
+4. Jobs table: sortable columns, pagination (10 per page), skill tags, empty state when no results.
+5. Dark mode toggle that remembers the choice (localStorage) and respects system preference by default.
+6. Fully responsive (mobile, tablet, desktop). Keyboard accessible, proper aria labels, good color contrast.
+7. UI language: Vietnamese, with all strings kept in one file (src/i18n/vi.ts) so they are easy to change.
+
+## Architecture
+- Folders: src/components, src/features (filters, charts, table), src/hooks, src/utils, src/types, src/data, src/i18n.
+- Put ALL data-processing logic (filtering, grouping, averages, histogram bins, top skills) in pure functions in src/utils so they are easy to test. Components only render.
+- Use custom hooks (e.g. useJobFilters, useFilteredJobs) with useMemo where it matters for performance.
+- Add a loading skeleton and an error boundary.
+- No `any` types. Keep components small and readable. Add short comments only where the logic is not obvious.
+
+## Testing and tooling
+- Unit tests (Vitest) for every function in src/utils, with edge cases (empty data, ties, filters that return nothing).
+- At least 2 component tests (filter bar, jobs table).
+- npm scripts: dev, build, preview, lint, test, format.
+- Add .github/workflows/ci.yml that runs lint, test and build on every push and pull request.
+
+## Documentation
+Create a README.md with: project description, screenshot placeholders, live demo link placeholder, features, tech stack, how to run locally, project structure, data notes (sample data disclaimer and how to replace it), key design decisions (why these libraries, why pure functions for data logic), and a "future improvements" section.
+
+## Performance target
+Lighthouse score above 90 for Performance, Accessibility and Best Practices. Use code splitting (lazy load the charts section) and avoid unnecessary re-renders.
+
+## How to work
+Build step by step: (1) project setup + types + data, (2) utils + tests, (3) filters + KPI cards, (4) charts, (5) table, (6) dark mode, responsive and accessibility polish, (7) CI + README. After each step, make sure the app runs without errors and commit with a clear message.
